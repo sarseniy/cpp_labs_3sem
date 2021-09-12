@@ -1,11 +1,24 @@
 #include <iostream>
 #include <vector>
-#include <cstring>
+#include <string>
  
 using namespace std;
  
 class Image {
 public:
+	Image(unsigned int* raw, size_t width, size_t height, size_t depth) : width{width}, height{height}, depth{depth},
+			Data_{vector<vector<vector<int>>>(depth, vector<vector<int>>(width, vector<int>(height, 0)))} {
+		for (size_t i = 0; i < width; i++)
+		{
+			for (size_t j = 0; j < height; j++)
+			{
+				for (size_t k = 0; k < depth; k++)
+				{
+					Data_[k][i][j] = raw[(i + j) * 3 + k];
+				}
+			}
+		}
+	}
 	Image(vector<vector<vector<int>>> raw, size_t width, size_t height, size_t depth) : width{ width }, height{ height }, depth{ depth },
 		Data_{ raw }
 	{}
@@ -28,7 +41,6 @@ public:
 	}
 	void to_gs() {
 		int tmp = 0;
-		//vector<vector<vector<int>>> new_Data(vector<vector<vector<int>>>(1, vector<vector<int>>(width, vector<int>(height, 0))));
 		for (size_t i = 0; i < height; i++)
 		{
 			for (size_t j = 0; j < width; j++)
@@ -63,13 +75,12 @@ public:
 			cout << '\n';
 		}
 	}
-	void to_bmp() {
+	void to_bmp(const char* file_name) {
 		FILE* f;
 		unsigned char* img = NULL;
 		int filesize = 54 + 3 * width * height;
  
-		img = (unsigned char*)malloc(3 * width * height);
-		memset(img, 0, 3 * width * height);
+		img = new unsigned char [3 * width * height];
  
 		int x, y;
  
@@ -102,7 +113,7 @@ public:
 		bmpinfoheader[10] = (unsigned char)(height >> 16);
 		bmpinfoheader[11] = (unsigned char)(height >> 24);
  
-		f = fopen("img.bmp", "wb");
+		f = fopen(file_name, "wb");
 		fwrite(bmpfileheader, 1, 14, f);
 		fwrite(bmpinfoheader, 1, 40, f);
 		for (int i = 0; i < height; i++)
@@ -111,7 +122,7 @@ public:
 			fwrite(bmppad, 1, (4 - (width * 3) % 4) % 4, f);
 		}
  
-		free(img);
+		delete [] img;
 		fclose(f);
 	}
 	void crop(int xi, int yi, int xf, int yf) {
@@ -153,7 +164,7 @@ int main(int argc, char** argv)
  
 	c.print();
 	c.crop(1, 1, 255, 255);
-	c.to_bmp();
+	c.to_bmp("my_image.bmp");
  
 	return 0;
 }
